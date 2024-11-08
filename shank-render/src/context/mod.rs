@@ -21,7 +21,7 @@ pub fn render_contexts_impl(
 
             pub struct Context<'a, T> {
                 pub accounts: T,
-                pub remaining_accounts: &'a [solana_program::account_info::AccountInfo<'a>],
+                pub remaining_accounts: &'a [AccountInfo],
             }
 
             #(#contexts)*

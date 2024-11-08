@@ -8,11 +8,11 @@ pub(crate) fn generate_context(variant: &InstructionVariant) -> TokenStream {
             let account_name = syn::parse_str::<syn::Ident>(&account.name).unwrap();
             if account.optional {
                 quote! {
-                    pub #account_name: Option<&'a solana_program::account_info::AccountInfo<'a>>
+                    pub #account_name: Option<&'a AccountInfo>
                 }
             } else {
                 quote! {
-                    pub #account_name:&'a solana_program::account_info::AccountInfo<'a>
+                    pub #account_name:&'a AccountInfo
                 }
             }
         });
@@ -22,7 +22,7 @@ pub(crate) fn generate_context(variant: &InstructionVariant) -> TokenStream {
             let account_name = syn::parse_str::<syn::Ident>(&account.name).unwrap();
             if account.optional {
                 quote! {
-                    #account_name: if accounts[#index].key == &crate::ID { None } else { Some(&accounts[#index]) }
+                    #account_name: if accounts[#index].key() == &crate::ID { None } else { Some(&accounts[#index]) }
                 }
             } else {
                 quote! {
@@ -42,10 +42,10 @@ pub(crate) fn generate_context(variant: &InstructionVariant) -> TokenStream {
         }
         impl<'a> #name<'a> {
             pub fn context(
-                accounts: &'a [solana_program::account_info::AccountInfo<'a>]
-            ) -> Result<Context<'a, Self>, solana_program::sysvar::slot_history::ProgramError> {
+                accounts: &'a [AccountInfo]
+            ) -> Result<Context<'a, Self>, ProgramError> {
                 if accounts.len() < #expected {
-                    return Err(solana_program::sysvar::slot_history::ProgramError::NotEnoughAccountKeys);
+                    return Err(ProgramError::NotEnoughAccountKeys);
                 }
 
                 Ok(Context {

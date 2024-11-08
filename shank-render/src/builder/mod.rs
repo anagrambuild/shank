@@ -21,7 +21,7 @@ pub fn render_builders_impl(
 
                 /// Trait that defines the interface for creating an instruction.
                 pub trait InstructionBuilder {
-                    fn instruction(&self) -> solana_program::instruction::Instruction;
+                    fn instruction(&self) -> Instruction;
                 }
 
                 #(#builders)*
