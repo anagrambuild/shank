@@ -5,7 +5,6 @@ use shank_macro_impl::{
     instruction::InstructionVariantFields,
     syn::{parse_str, Expr, ExprPath, Ident},
 };
-use std::collections::HashMap;
 
 pub(crate) fn generate_builders(
     item: &Ident,
