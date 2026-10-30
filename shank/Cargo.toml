@@ -8,4 +8,4 @@ version = "0.4.2"
 edition = "2018"
 
 [dependencies]
-shank_macro = { version = "0.4.2", path = "../shank-macro" }
+shank_macro = { package = "swig-shank-macro", version = "=0.4.2", path = "../shank-macro" }

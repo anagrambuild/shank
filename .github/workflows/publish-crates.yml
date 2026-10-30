@@ -1,0 +1,65 @@
+name: Publish Pinocchio Shank Crates
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/publish-crates.yml
+      - Cargo.toml
+      - shank-render/**
+      - shank-macro/**
+      - shank/Cargo.toml
+  push:
+    branches: [master]
+    paths:
+      - .github/workflows/publish-crates.yml
+      - Cargo.toml
+      - shank-render/**
+      - shank-macro/**
+      - shank/Cargo.toml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.1
+      - run: cargo test -p swig-shank-render -p swig-shank-macro
+      - name: Verify release archives
+        run: |
+          cargo package -p swig-shank-render
+          cargo package -p swig-shank-macro --config "patch.crates-io.swig-shank-render.path=\"$GITHUB_WORKSPACE/shank-render\""
+
+  publish:
+    if: github.repository == 'anagrambuild/shank' && github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.96.1
+      # Each new name requires one owner-authenticated publication before
+      # configuring this workflow as its crates.io trusted publisher.
+      - uses: rust-lang/crates-io-auth-action@v1
+        id: auth
+      - name: Publish unpublished versions in dependency order
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+        run: |
+          for manifest in shank-render/Cargo.toml shank-macro/Cargo.toml; do
+            read -r crate version < <(python3 -c 'import sys,tomllib; p=tomllib.load(open(sys.argv[1], "rb"))["package"]; print(p["name"], p["version"])' "$manifest")
+            if cargo info "$crate@$version" --registry crates-io >/dev/null 2>&1; then
+              echo "$crate@$version is already published"
+            else
+              cargo publish -p "$crate"
+            fi
+          done
